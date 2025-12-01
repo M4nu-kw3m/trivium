@@ -5,12 +5,13 @@ import { getAnalytics, logEvent } from 'firebase/analytics';
 
 // Firebase configuration from your project
 const firebaseConfig = {
-  apiKey: "AIzaSyC_54nwj2XMhtevpOjtcNdje53tFUSlZX4",
+  apiKey: "AIzaSyDpQKR-N9RVOKSVZszOtrs4WwW2vo7_rVw",
   authDomain: "trivium1960.firebaseapp.com",
   projectId: "trivium1960",
-  storageBucket: "trivium1960.appspot.com",
+  storageBucket: "trivium1960.firebasestorage.app",
   messagingSenderId: "276143711712",
-  appId: "1:276143711712:web:YOUR_APP_ID"
+  appId: "1:276143711712:web:da2270e4afbbd7856ff785",
+  measurementId: "G-DJ94TG4BWB"
 };
 
 // Initialize Firebase
