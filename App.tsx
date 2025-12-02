@@ -8,6 +8,8 @@ import ScoreScreen from './components/ScoreScreen';
 import Lobby from './components/Lobby';
 import { fetchTriviaQuestions } from './services/geminiService';
 
+import { subscribeToLiveGame } from './services/firebaseGameService';
+
 const App: React.FC = () => {
   const [gameState, setGameState] = useState<GameState>(GameState.CATEGORY_SELECTION);
   const [questions, setQuestions] = useState<TriviaQuestion[]>([]);
@@ -26,8 +28,37 @@ const App: React.FC = () => {
   const [isHost, setIsHost] = useState(false);
   const [joinRoomId, setJoinRoomId] = useState('');
 
+  // Listen for live games on Firebase
   useEffect(() => {
-    if (isMultiplayer && !socket) {
+    const unsubscribe = subscribeToLiveGame((game) => {
+      if (game) {
+        console.log("Live game found:", game);
+        if (game.questions && game.questions.length > 0) {
+          setQuestions(game.questions);
+        }
+        if (game.currentQuestionIndex !== undefined) {
+          setCurrentQuestionIndex(game.currentQuestionIndex);
+        }
+        if (game.players) {
+          setPlayers(game.players);
+        }
+        setGameState(GameState.PLAYING);
+        setIsMultiplayer(true);
+        setRoomId(game.id);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (isMultiplayer && !socket && !roomId) { // Only connect socket if we don't have a room yet (or maybe we should differentiate modes)
+      // Actually, if we are in "Firebase Mode", we might not want to connect to socket.io at all, 
+      // OR we might want to connect to chat? 
+      // For now, let's leave the socket logic as is, but maybe add a check?
+      // If we found a room via Firebase, we have a roomId. 
+      // The existing socket logic connects if (isMultiplayer && !socket).
+      // It doesn't check for roomId.
+
       const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
       const newSocket = io(backendUrl);
       setSocket(newSocket);
@@ -98,8 +129,8 @@ const App: React.FC = () => {
       } else {
         setError('Failed to load questions. Please try a different category.');
       }
-    } catch (err) {
-      setError('An error occurred while fetching questions. Please try again.');
+    } catch (err: any) {
+      setError(err.message || 'An error occurred while fetching questions. Please try again.');
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -128,8 +159,8 @@ const App: React.FC = () => {
       } else {
         setError('Failed to load questions.');
       }
-    } catch (e) {
-      setError('Error generating questions');
+    } catch (e: any) {
+      setError(e.message || 'Error generating questions');
       console.error('Error:', e);
     } finally {
       setIsLoading(false);
@@ -212,9 +243,9 @@ const App: React.FC = () => {
       case GameState.PLAYING:
         return (
           <QuestionCard
-            question={questions[isMultiplayer ? questions.length - 1 : currentQuestionIndex]} // In multiplayer, we append questions
+            question={questions[currentQuestionIndex]}
             onAnswer={(isCorrect, answer) => handleAnswer(isCorrect, answer)}
-            questionNumber={isMultiplayer ? questions.length : currentQuestionIndex + 1}
+            questionNumber={currentQuestionIndex + 1}
             totalQuestions={isMultiplayer ? 5 : questions.length} // Hardcoded 5 for multiplayer display for now or pass from server
           />
         );

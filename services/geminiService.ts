@@ -32,7 +32,7 @@ export const fetchTriviaQuestions = async (category: string): Promise<TriviaQues
     console.log('All env vars:', import.meta.env);
     if (!API_KEY) {
       console.error("VITE_GEMINI_API_KEY environment variable is not set");
-      return null;
+      throw new Error("Missing API Key: VITE_GEMINI_API_KEY is not set.");
     }
 
     const ai = new GoogleGenAI({ apiKey: API_KEY });
@@ -63,10 +63,10 @@ export const fetchTriviaQuestions = async (category: string): Promise<TriviaQues
         options: [...q.options].sort(() => Math.random() - 0.5)
       }));
     }
-    return null;
+    throw new Error("Invalid response format from AI");
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching trivia questions:', error);
-    return null;
+    throw new Error(error.message || "Failed to generate questions");
   }
 };

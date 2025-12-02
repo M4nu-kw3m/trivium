@@ -23,4 +23,6 @@ export interface Room {
   category: string;
   players: Player[];
   gameState: 'LOBBY' | 'PLAYING' | 'FINISHED';
+  questions?: TriviaQuestion[];
+  currentQuestionIndex?: number;
 }
